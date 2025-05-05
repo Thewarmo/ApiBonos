@@ -1,0 +1,6 @@
+@BonosEsteticaApi_HostAddress = http://localhost:5080
+
+GET {{BonosEsteticaApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
