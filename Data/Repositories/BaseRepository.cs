@@ -32,6 +32,7 @@ namespace BonosEsteticaApi.Data.Repositories
             }
         }
 
+
         protected async Task<int> ExecuteAsync(string sql, object param = null)
         {
             using (var connection = _dbConnection.CreateConnection())

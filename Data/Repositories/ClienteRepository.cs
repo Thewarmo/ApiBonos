@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BonosEsteticaApi.Models;
+using Dapper;
 
 namespace BonosEsteticaApi.Data.Repositories
 {
@@ -11,9 +12,14 @@ namespace BonosEsteticaApi.Data.Repositories
         {
         }
 
-        public async Task<IEnumerable<Cliente>> GetAllAsync()
+        public async Task<Cliente> GetByEmailAsync(string correo)
         {
-            return await QueryAsync("SELECT * FROM Clientes");
+            return await QueryFirstOrDefaultAsync("SELECT * FROM Clientes WHERE Correo = @Correo", new { Correo = correo });
+        }
+
+        public async Task<Cliente> GetByTelefonoAsync(string telefono)
+        {
+            return await QueryFirstOrDefaultAsync("SELECT * FROM Clientes WHERE Telefono = @Telefono", new { Telefono = telefono });
         }
 
         public async Task<Cliente> GetByIdAsync(int id)
@@ -21,11 +27,16 @@ namespace BonosEsteticaApi.Data.Repositories
             return await QueryFirstOrDefaultAsync("SELECT * FROM Clientes WHERE ClienteId = @Id", new { Id = id });
         }
 
+        public async Task<IEnumerable<Cliente>> GetAllAsync()
+        {
+            return await QueryAsync("SELECT * FROM Clientes");
+        }
+
         public async Task<int> CreateAsync(Cliente cliente)
         {
             var sql = @"
-                INSERT INTO Clientes (Nombre, Apellido, Correo, Telefono, FechaRegistro)
-                VALUES (@Nombre, @Apellido, @Correo, @Telefono, @FechaRegistro);
+                INSERT INTO Clientes (Nombre, Apellido, Correo, Telefono, FechaRegistro,Activo)
+                VALUES (@Nombre, @Apellido, @Correo, @Telefono, @FechaRegistro, 1);
                 SELECT CAST(SCOPE_IDENTITY() as int)";
 
             return await ExecuteScalarAsync<int>(sql, cliente);
@@ -34,22 +45,31 @@ namespace BonosEsteticaApi.Data.Repositories
         public async Task<bool> UpdateAsync(Cliente cliente)
         {
             var sql = @"
-                UPDATE Clientes
-                SET Nombre = @Nombre,
-                    Apellido = @Apellido,
-                    Correo = @Correo,
-                    Telefono = @Telefono
+                UPDATE Clientes 
+                SET Nombre = @Nombre, 
+                    Apellido = @Apellido, 
+                    Correo = @Correo, 
+                    Telefono = @Telefono, 
+                    FechaRegistro = @FechaRegistro, 
+                    Activo = @Activo
                 WHERE ClienteId = @ClienteId";
 
-            var result = await ExecuteAsync(sql, cliente);
-            return result > 0;
+            var affectedRows = await ExecuteAsync(sql, cliente);
+            return affectedRows > 0;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var sql = "DELETE FROM Clientes WHERE ClienteId = @Id";
-            var result = await ExecuteAsync(sql, new { Id = id });
-            return result > 0;
+            var sql = "UPDATE Clientes SET Activo = 0 WHERE ClienteId = @Id";
+            var affectedRows = await ExecuteAsync(sql, new { Id = id });
+            return affectedRows > 0;
+        }
+
+        public async Task<bool> ActivateAsync(int id)
+        {
+            var sql = "UPDATE Clientes SET Activo = 1 WHERE ClienteId = @Id";
+            var affectedRows = await ExecuteAsync(sql, new { Id = id });
+            return affectedRows > 0;
         }
     }
 }

@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 namespace BonosEsteticaApi.Controllers
 {
@@ -23,6 +25,7 @@ namespace BonosEsteticaApi.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var usuario = await _usuarioRepository.GetByEmailAsync(model.Username);
@@ -33,7 +36,20 @@ namespace BonosEsteticaApi.Controllers
             }
 
             // Verificar la contraseña
-            if (!VerifyPassword(model.Password, usuario.ContraseñaHash))
+            bool passwordValid;
+            
+            // Si el usuario tiene salt, usar PBKDF2
+            if (!string.IsNullOrEmpty(usuario.ContraseñaSalt))
+            {
+                passwordValid = VerifyPasswordWithPbkdf2(model.Password, usuario.ContraseñaHash, usuario.ContraseñaSalt);
+            }
+            else
+            {
+                // Fallback al método SHA256 para usuarios existentes
+                passwordValid = VerifyPasswordWithSha256(model.Password, usuario.ContraseñaHash);
+            }
+            
+            if (!passwordValid)
             {
                 return Unauthorized();
             }
@@ -44,16 +60,31 @@ namespace BonosEsteticaApi.Controllers
             return Ok(new { token });
         }
 
-        private bool VerifyPassword(string password, string storedHash)
+        private bool VerifyPasswordWithSha256(string password, string storedHash)
         {
-            // En un escenario real, deberías usar un algoritmo de hash seguro como bcrypt
-            // Este es un ejemplo simple usando SHA256
             using (var sha256 = SHA256.Create())
             {
                 var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
                 var hash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
                 return hash == storedHash;
             }
+        }
+        
+        private bool VerifyPasswordWithPbkdf2(string password, string storedHash, string storedSalt)
+        {
+            byte[] saltBytes = Convert.FromBase64String(storedSalt);
+            
+            // Derivar un hash de 256 bits de la contraseña con PBKDF2
+            byte[] computedHash = KeyDerivation.Pbkdf2(
+                password: password,
+                salt: saltBytes,
+                prf: KeyDerivationPrf.HMACSHA256,
+                iterationCount: 10000,
+                numBytesRequested: 256 / 8);
+            
+            string computedHashString = Convert.ToBase64String(computedHash);
+            
+            return computedHashString == storedHash;
         }
     }
 }

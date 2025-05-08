@@ -1,31 +1,23 @@
 using System;
 
-namespace BonosEsteticaApi.Models
+namespace BonosEsteticaApi.DTOs
 {
-    public class Cliente
+    public class ClienteCreacionDto
     {
-        public int ClienteId { get; set; }
         public string Nombre { get; set; }
         public string Apellido { get; set; }
         public string Correo { get; set; }
         public string Telefono { get; set; }
         public DateTime FechaRegistro { get; set; }
-        public bool Activo { get; set; }
     }
 
-    public class ClientexId
+    public class ClienteActualizacionDto
     {
-        public int idCliente { get; set; }
-    }
-
-    public class ClienteActualizacion
-    {
-        public int ClienteId { get; set; }
         public string Nombre { get; set; }
         public string Apellido { get; set; }
         public string Correo { get; set; }
         public string Telefono { get; set; }
-        public DateTime FechaRegistro { get; set; }
+        public DateTime FechaNacimiento { get; set; }
         public bool Activo { get; set; }
     }
 }

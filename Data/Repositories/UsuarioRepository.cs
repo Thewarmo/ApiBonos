@@ -29,8 +29,8 @@ namespace BonosEsteticaApi.Data.Repositories
         public async Task<int> CreateAsync(Usuario usuario)
         {
             var sql = @"
-                INSERT INTO Usuarios (Nombre, Correo, ContraseñaHash, Rol, Activo)
-                VALUES (@Nombre, @Correo, @ContraseñaHash, @Rol, @Activo);
+                INSERT INTO Usuarios (Nombre, Correo, ContraseñaHash,ContraseñaSalt, Rol, Activo)
+                VALUES (@Nombre, @Correo, @ContraseñaHash,@ContraseñaSalt, @Rol, @Activo);
                 SELECT CAST(SCOPE_IDENTITY() as int)";
 
             return await ExecuteScalarAsync<int>(sql, usuario);
@@ -53,7 +53,7 @@ namespace BonosEsteticaApi.Data.Repositories
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var sql = "DELETE FROM Usuarios WHERE UsuarioId = @Id";
+            var sql = "UPDATE Usuarios SET Activo = 0 WHERE UsuarioId = @Id";
             var result = await ExecuteAsync(sql, new { Id = id });
             return result > 0;
         }

@@ -17,6 +17,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<DatabaseConnection>();
 builder.Services.AddScoped<ClienteRepository>();
 builder.Services.AddScoped<UsuarioRepository>();
+builder.Services.AddScoped<ProcedimientoRepository>();
+builder.Services.AddScoped<BonoRepository>();
+builder.Services.AddScoped<HistorialBonoRepository>();
 // Registrar otros repositorios según sea necesario
 
 // Registrar el servicio de tokens
